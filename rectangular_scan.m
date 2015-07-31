@@ -1,4 +1,4 @@
-function [M y] = rectangular_scan(image,h,v,start)
+function [M, y] = rectangular_scan(image, row, column, initial_corner)
 
 % y is the window-sum vector block of the entire window-sum vector.
 % M is the scan matrix block.
@@ -7,31 +7,35 @@ function [M y] = rectangular_scan(image,h,v,start)
 % smaller than the image to be scanned, the parameter image must be given
 % as the piece of the image which fits in the "device".
 %
-% h and v (scalars) are the horizontal and vertical, respectively, length of the
+% column and row (scalars) are the horizontal and vertical, respectively, length of the
 % rectangle scanner.
 %
 % start (vector, entry of matrix image) is the parameter which defines the initial
 % position of the upper left part of the scan rectangle. Default is (1,1).
-% Must satisfy: (1,1)<=start<=(h,v)
+% Must satisfy: (1,1)<= initial_corner <=(column,row)
 
 
 [m,n] =  size(image);
-if isempty(v)
-    v=h;
+if isempty(column)
+    column=row;
 end
 sum = 0; k = 1;
-c1 = start(1); c2 = start(2);
-if c1>h||c2>v
+c1 = initial_corner(1); c2 = initial_corner(2);
+if c1>row||c2>column
     warning('not the best parameter to start');
 end
-a = 1; b = 1;
 
-while start(1)+a*h<=m % loop the rectangle over the image
-    while start(2)+b*v<=n
-        
-        A = spalloc(m,n,h*v); % alloc space for the scan matrix
-        for i=0:h-1 % loop inside the rectangle
-            for j=0:v-1
+N_vert_shifts = floor((m-c1+1)/row);
+N_horiz_shifts = floor((n-c2+1)/column);
+y = zeros(1,N_horiz_shifts*N_vert_shifts);
+M = spalloc(N_horiz_shifts*N_vert_shifts,m*n,column*row);
+
+for a = 1:N_vert_shifts % loop the rectangle over the image
+    for b = 1:N_horiz_shifts
+       
+        A = spalloc(m,n,column*row); % alloc space for the scan matrix
+        for i=0:row-1 % loop inside the rectangle
+            for j=0:column-1
                 sum = sum + image(c1+i,c2+j);
                 A(c1+i,c2+j) = 1; % to build scan matrix
             end
@@ -41,11 +45,8 @@ while start(1)+a*h<=m % loop the rectangle over the image
         k = k+1;
         sum = 0;
         
-        c2 = start(2)+b*v;
-        b = b+1;
+        c2 = initial_corner(2)+b*column;
     end
-    b=1;
-    c2 = start(2);
-    c1 = start(1)+a*h;
-    a = a+1;
+    c2 = initial_corner(2);
+    c1 = initial_corner(1)+a*row;
 end

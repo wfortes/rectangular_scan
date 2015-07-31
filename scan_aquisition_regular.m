@@ -1,14 +1,25 @@
-function [min_norm_y M_main y_main sumMmax,uni] = ...
-    rectang_scan_aquisition_regular(P,img_sz,N_scan_windows,ratio,scan_window_sz_r)
+function [min_norm_y, M_main, y_main, sumMmax, uni] = ...
+    scan_aquisition_regular(P, N_scan_shifts, scan_window_sz)
+%RECTANGULAR_SCAN_AQUISITION_REGULAR generates data from the rectangular
+%scanning of higher resolution images using lower resolution scans with
+%regularly distributed scannng window position
+%   Output:
+%   MIN_NORM_Y is the minimum norm among the norms of k blocks of Y_MAIN
+%   M_MAIN is the scan matrix
+%   Y_MAIN is the vetor of acquired scan data (lower resolution image)
+%   SUMMAX is the max column sum among the k blocks of M_MAIN
+%   UNI are the indexes of the scanned pixels
 %
-scan_window_sz_c = scan_window_sz_r;         % number of columns
-if strcmp(N_scan_windows,'ratio')
-    k = ceil(img_sz/ratio);       % number of rectangular scan shifts
-elseif strcmp(N_scan_windows,'N_scan_w')
-    k=ratio;
-end
+%   Input:
+%   P is the higher resolution image
+%   N_SCAN_SHIFTS is the number of rectangular scan shifts
+%   SCAN_WINDOW_SZ is the number of rows on the scan window
+%
+% Wagner Fortes 2014/2015 wfortes@gmail.com
 
-count_aux = floor((scan_window_sz_r-1)/k)+1;
+k = N_scan_shifts; % number of rectangular scan shifts
+
+count_aux = floor((scan_window_sz-1)/k)+1;
 initial_corners = zeros(2,k);
 aux = 0;
 
@@ -26,7 +37,7 @@ y_main = [];
 col = cell(k,1);
 idx = 1;
 for i=1:k
-    [M{i} y{i}] = rectangular_scan_Beta(P,scan_window_sz_r,[],initial_corners(:,i));
+    [M{i} y{i}] = rectangular_scan(P,scan_window_sz,[],initial_corners(:,i));
     if i==1
         sumMmax = sum(sum(M{1}));
         sumMnew = sumMmax;
